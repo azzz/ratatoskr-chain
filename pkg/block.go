@@ -29,10 +29,6 @@ func newBlock(data string, prevBlockHash []byte) Block {
 	}
 }
 
-func (bc Block) Prooved() bool {
-	return bc.Hash != nil
-}
-
 func (b *Block) Proove(pow ProofOfWorkResult) {
 	b.Hash = pow.Hash
 	b.Nonce = pow.Nonce

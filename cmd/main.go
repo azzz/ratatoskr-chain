@@ -14,7 +14,7 @@ func main() {
 		t time.Time
 	)
 
-	pow := pkg.NewSimpleHashCash(0)
+	pow := pkg.NewSimpleHashCash(24)
 	blockchain := pkg.NewBlockchain(pow)
 
 	ctx := context.Background()
@@ -36,6 +36,6 @@ func main() {
 	genesis, _ := blockchain.Block(0)
 	block, _ := blockchain.Block(1)
 
-	fmt.Printf("genesis: %s\n", genesis)
-	fmt.Printf("block: %s\n", block)
+	fmt.Printf("genesis: %s, Valid: %t\n", genesis, pow.Validate(&genesis))
+	fmt.Printf("block: %s, Valid: %t\n", block, pow.Validate(&block))
 }

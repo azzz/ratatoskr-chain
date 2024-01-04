@@ -55,6 +55,16 @@ type ProofOfWorkResult struct {
 	Hash  []byte
 }
 
+func (p SimpleHashCash) Validate(block *Block) bool {
+	var hashInt big.Int
+
+	data := p.dataToHash(block, block.Nonce)
+	hash := sha256.Sum256(data)
+	hashInt.SetBytes(hash[:])
+
+	return hashInt.Cmp(p.target) == -1 && hash == [32]byte(block.Hash)
+}
+
 func (p SimpleHashCash) Run(ctx context.Context, block *Block) (ProofOfWorkResult, error) {
 	var (
 		done    = make(chan ProofOfWorkResult) // used to return a result from the goroutine
