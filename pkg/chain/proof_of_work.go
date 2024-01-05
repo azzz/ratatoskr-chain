@@ -1,4 +1,4 @@
-package pkg
+package chain
 
 import (
 	"bytes"
@@ -65,7 +65,7 @@ func (p SimpleHashCash) Validate(block *Block) bool {
 	return hashInt.Cmp(p.target) == -1 && hash == [32]byte(block.Hash)
 }
 
-func (p SimpleHashCash) Run(ctx context.Context, block *Block) (ProofOfWorkResult, error) {
+func (p SimpleHashCash) Run(ctx context.Context, block *Block) error {
 	var (
 		done    = make(chan ProofOfWorkResult) // used to return a result from the goroutine
 		errDone = make(chan error)             // used to return an error from the goroutine
@@ -101,10 +101,13 @@ func (p SimpleHashCash) Run(ctx context.Context, block *Block) (ProofOfWorkResul
 
 	select {
 	case result := <-done:
-		return result, nil
+		block.Hash = result.Hash
+		block.Nonce = result.Nonce
+
+		return nil
 	case err := <-errDone:
-		return ProofOfWorkResult{}, err
+		return err
 	case <-ctx.Done():
-		return ProofOfWorkResult{}, ctx.Err()
+		return ctx.Err()
 	}
 }
