@@ -1,4 +1,4 @@
-package chain
+package block
 
 import (
 	"bytes"
@@ -6,30 +6,12 @@ import (
 	"encoding/hex"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type Block struct {
-	Timestamp     uint64
-	Data          []byte
-	PrevBlockHash []byte
-	Hash          []byte
-	Nonce         uint64
-}
-
-// newBlock creates a new block without hash and nonce
-func newBlock(data string, prevBlockHash []byte) Block {
-	ts := time.Now().UnixMicro()
-	return Block{
-		Timestamp:     uint64(ts),
-		Data:          []byte(data),
-		PrevBlockHash: prevBlockHash,
-	}
-}
-
-func (b *Block) Proove(pow ProofOfWorkResult) {
-	b.Hash = pow.Hash
-	b.Nonce = pow.Nonce
+	Candidate
+	Nonce uint64
+	Hash  []byte
 }
 
 func (b Block) String() string {
@@ -38,12 +20,7 @@ func (b Block) String() string {
 		hex.EncodeToString(b.Hash),
 	}
 
-	str := []string{
-		strings.Join(header, ":"),
-		string(b.Data),
-	}
-
-	return strings.Join(str, ";")
+	return strings.Join(header, ";")
 }
 
 func (b Block) Serialize() ([]byte, error) {

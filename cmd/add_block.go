@@ -23,9 +23,9 @@ var addBlockCmd = &cobra.Command{
 			return fmt.Errorf("required 1 argument, give: %d", len(args))
 		}
 
-		bc := NewBlockchain()
+		bc := LoadBlockchain()
 		logger.Printf("generating block, tip is: %x", bc.Tip())
-		err := bc.AddBlock(cmd.Context(), args[0])
+		err := bc.AddBlock(args[0])
 		if err != nil {
 			return err
 		}

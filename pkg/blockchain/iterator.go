@@ -1,12 +1,15 @@
-package chain
+package blockchain
 
 import (
+	"errors"
+
+	"github.com/azzz/ratatoskr/pkg/block"
 	"go.etcd.io/bbolt"
 )
 
 type Iterator struct {
 	head  []byte
-	block Block
+	block block.Block
 	err   error
 	db    *bbolt.DB
 }
@@ -15,23 +18,25 @@ func (i *Iterator) Err() error {
 	return i.err
 }
 
-func (i *Iterator) Block() Block {
+func (i *Iterator) Block() block.Block {
 	return i.block
 }
 
 func (i *Iterator) Next() bool {
-	var block Block
-
 	if i.head == nil {
 		return false
 	}
 
 	err := i.db.View(func(tx *bbolt.Tx) error {
-		b := tx.Bucket(blocksKey)
-		encoded := b.Get(i.head)
+		bucket := tx.Bucket(blocksBucket)
+		if bucket == nil {
+			return errors.New("missing bucket")
+		}
+
+		encoded := bucket.Get(i.head)
 
 		var err error
-		block, err = DeserializeBlock(encoded)
+		i.block, err = block.DeserializeBlock(encoded)
 		return err
 	})
 
@@ -40,8 +45,7 @@ func (i *Iterator) Next() bool {
 		return false
 	}
 
-	i.block = block
-	i.head = block.PrevBlockHash
+	i.head = i.block.PrevBlockHash
 
 	return true
 }
