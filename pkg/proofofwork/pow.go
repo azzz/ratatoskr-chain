@@ -38,7 +38,7 @@ type ProofOfWorkResult struct {
 func (p ProofOfWork) Validate(b block.Block) bool {
 	var hashInt big.Int
 
-	headers := p.prepareHeaders(b.Candidate, b.Nonce)
+	headers := p.prepareHeaders(b, b.Nonce)
 	data := bytes.Join(headers, []byte{})
 	hash := sha256.Sum256(data)
 	hashInt.SetBytes(hash[:])
@@ -46,7 +46,7 @@ func (p ProofOfWork) Validate(b block.Block) bool {
 	return hashInt.Cmp(p.target) == -1 && hash == [32]byte(b.Hash)
 }
 
-func (p ProofOfWork) Sign(b block.Candidate) (block.Block, error) {
+func (p ProofOfWork) Sign(b block.Block) (block.Block, error) {
 	var (
 		nonce   uint64 = 0
 		hashInt big.Int
@@ -62,11 +62,9 @@ func (p ProofOfWork) Sign(b block.Candidate) (block.Block, error) {
 
 		// hash is lower than target
 		if hashInt.Cmp(p.target) == -1 {
-			return block.Block{
-				Candidate: b,
-				Nonce:     nonce,
-				Hash:      hash[:],
-			}, nil
+			b.Nonce = nonce
+			b.Hash = hash[:]
+			return b, nil
 		} else {
 			nonce++
 		}
@@ -75,7 +73,7 @@ func (p ProofOfWork) Sign(b block.Candidate) (block.Block, error) {
 	return block.Block{}, errors.New("reached the maximal nonce without a result")
 }
 
-func (p ProofOfWork) prepareHeaders(b block.Candidate, nonce uint64) [][]byte {
+func (p ProofOfWork) prepareHeaders(b block.Block, nonce uint64) [][]byte {
 	return [][]byte{
 		b.PrevBlockHash,
 		b.Data,

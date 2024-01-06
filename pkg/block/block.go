@@ -6,12 +6,33 @@ import (
 	"encoding/hex"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Block struct {
-	Candidate
-	Nonce uint64
-	Hash  []byte
+	Timestamp     uint64
+	Data          []byte
+	PrevBlockHash []byte
+	Nonce         uint64
+	Hash          []byte
+}
+
+func New(data string, prevBlockHash []byte) Block {
+	ts := time.Now().UnixMicro()
+	return Block{
+		Timestamp:     uint64(ts),
+		Data:          []byte(data),
+		PrevBlockHash: prevBlockHash,
+	}
+}
+
+func NewGenesis() Block {
+	ts := time.Now().UnixMicro()
+	return Block{
+		Timestamp:     uint64(ts),
+		Data:          []byte("genesis block"),
+		PrevBlockHash: []byte{},
+	}
 }
 
 func (b Block) String() string {

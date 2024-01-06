@@ -9,7 +9,7 @@ import (
 )
 
 type ProofOfWork interface {
-	Sign(block block.Candidate) (block.Block, error)
+	Sign(block block.Block) (block.Block, error)
 }
 
 type Blockchain struct {
@@ -43,26 +43,26 @@ func (bc *Blockchain) AddBlock(value string) error {
 		return errors.New("missing tip")
 	}
 
-	candidate := block.NewCandidate(value, tip)
-	block, err := bc.pow.Sign(candidate)
+	block := block.New(value, tip)
+	signed, err := bc.pow.Sign(block)
 	if err != nil {
 		return fmt.Errorf("proof-of-work: %w", err)
 	}
 
-	encoded, err := block.Serialize()
+	encoded, err := signed.Serialize()
 	if err != nil {
 		return fmt.Errorf("serialize: %w", err)
 	}
 
-	if err := b.Put(block.Hash, encoded); err != nil {
+	if err := b.Put(signed.Hash, encoded); err != nil {
 		return fmt.Errorf("save block: %w", err)
 	}
 
-	if err := b.Put(tipKey, block.Hash); err != nil {
+	if err := b.Put(tipKey, signed.Hash); err != nil {
 		return fmt.Errorf("save tip: %w", err)
 	}
 
-	bc.tip = block.Hash
+	bc.tip = signed.Hash
 
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit tx: %w", err)
