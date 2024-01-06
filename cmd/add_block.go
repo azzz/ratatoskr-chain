@@ -25,12 +25,12 @@ var addBlockCmd = &cobra.Command{
 
 		bc := LoadBlockchain()
 		logger.Printf("generating block, tip is: %x", bc.Tip())
-		err := bc.AddBlock(args[0])
-		if err != nil {
-			return err
-		}
+		//err := bc.AddBlock(args[0])
+		//if err != nil {
+		//	return err
+		//}
 
-		logger.Printf("now tip is %x", bc.Tip())
+		//logger.Printf("now tip is %x", bc.Tip())
 
 		return nil
 	},

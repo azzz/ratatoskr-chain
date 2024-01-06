@@ -3,6 +3,7 @@ package blockchain
 import (
 	"errors"
 	"fmt"
+	"github.com/azzz/ratatoskr/pkg/transaction"
 
 	"github.com/azzz/ratatoskr/pkg/block"
 	"go.etcd.io/bbolt"
@@ -26,7 +27,7 @@ func (bc Blockchain) Tip() []byte {
 	return bc.tip
 }
 
-func (bc *Blockchain) AddBlock(value string) error {
+func (bc *Blockchain) AddBlock(transactions []transaction.Transaction) error {
 	tx, err := bc.db.Begin(true)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
@@ -43,7 +44,7 @@ func (bc *Blockchain) AddBlock(value string) error {
 		return errors.New("missing tip")
 	}
 
-	block := block.New(value, tip)
+	block := block.New(transactions, tip)
 	signed, err := bc.pow.Sign(block)
 	if err != nil {
 		return fmt.Errorf("proof-of-work: %w", err)
@@ -68,6 +69,10 @@ func (bc *Blockchain) AddBlock(value string) error {
 		return fmt.Errorf("commit tx: %w", err)
 	}
 
+	return nil
+}
+
+func (bc Blockchain) FindUnspendTransactions(address string) []transaction.Transaction {
 	return nil
 }
 

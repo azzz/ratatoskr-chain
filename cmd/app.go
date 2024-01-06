@@ -8,11 +8,11 @@ import (
 	"go.etcd.io/bbolt"
 )
 
-func CreateBlockchain() blockchain.Blockchain {
+func CreateBlockchain(address string) blockchain.Blockchain {
 	db, err := bbolt.Open(path.Join(config.DataDir, "database.db"), 0600, nil)
 	cobra.CheckErr(err)
 
-	bc, err := blockchain.Create(db)
+	bc, err := blockchain.Create(db, address)
 	cobra.CheckErr(err)
 
 	return bc

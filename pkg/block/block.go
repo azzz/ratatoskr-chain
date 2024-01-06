@@ -2,8 +2,10 @@ package block
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/gob"
 	"encoding/hex"
+	tx "github.com/azzz/ratatoskr/pkg/transaction"
 	"strconv"
 	"strings"
 	"time"
@@ -11,28 +13,40 @@ import (
 
 type Block struct {
 	Timestamp     uint64
-	Data          []byte
+	Transactions  []tx.Transaction
 	PrevBlockHash []byte
 	Nonce         uint64
 	Hash          []byte
 }
 
-func New(data string, prevBlockHash []byte) Block {
+func New(transactions []tx.Transaction, prevBlockHash []byte) Block {
 	ts := time.Now().UnixMicro()
 	return Block{
 		Timestamp:     uint64(ts),
-		Data:          []byte(data),
+		Transactions:  transactions,
 		PrevBlockHash: prevBlockHash,
 	}
 }
 
-func NewGenesis() Block {
+func NewGenesis(coinbase tx.Transaction) Block {
 	ts := time.Now().UnixMicro()
 	return Block{
 		Timestamp:     uint64(ts),
-		Data:          []byte("genesis block"),
+		Transactions:  []tx.Transaction{coinbase},
 		PrevBlockHash: []byte{},
 	}
+}
+
+func (b Block) TransactionsHash() []byte {
+	var hashes [][]byte
+
+	for _, tx := range b.Transactions {
+		hashes = append(hashes, tx.ID)
+	}
+
+	hash := sha256.Sum256(bytes.Join(hashes, []byte{}))
+
+	return hash[:]
 }
 
 func (b Block) String() string {

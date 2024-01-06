@@ -23,7 +23,7 @@ var listCmd = &cobra.Command{
 		iter := bc.Iterator()
 
 		w := tabwriter.NewWriter(os.Stdout, 1, 1, 1, ' ', 0)
-		fmt.Fprintf(w, "timestamp\thash\tvalid\tvalue\n")
+		fmt.Fprintf(w, "timestamp\thash\tvalid\n")
 
 		for iter.Next() {
 			if iter.Err() != nil {
@@ -32,11 +32,10 @@ var listCmd = &cobra.Command{
 			b := iter.Block()
 			ts := time.UnixMicro(int64(b.Timestamp))
 			fmt.Fprintf(w,
-				"%s\t%s\t%t\t%q\n",
+				"%s\t%s\t%t\t\n",
 				ts.Format(time.DateTime),
 				b.String(),
 				pow.Validate(b),
-				b.Data,
 			)
 		}
 

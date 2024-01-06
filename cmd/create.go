@@ -13,11 +13,18 @@ var createCmd = &cobra.Command{
 	Short: "Create blockchain",
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Print("creating blockchain")
-		bc := CreateBlockchain()
+		addrs, err := cmd.Flags().GetString("address")
+		cobra.CheckErr(err)
+
+		bc := CreateBlockchain(addrs)
+
 		logger.Printf("done, tip: %x", bc.Tip())
 	},
 }
 
 func init() {
+	createCmd.Flags().String("address", "", "Blockchain address")
+	createCmd.MarkFlagRequired("address")
+
 	rootCmd.AddCommand(createCmd)
 }

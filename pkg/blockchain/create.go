@@ -2,13 +2,14 @@ package blockchain
 
 import (
 	"fmt"
+	"github.com/azzz/ratatoskr/pkg/transaction"
 
 	"github.com/azzz/ratatoskr/pkg/block"
 	"github.com/azzz/ratatoskr/pkg/proofofwork"
 	"go.etcd.io/bbolt"
 )
 
-func Create(db *bbolt.DB) (Blockchain, error) {
+func Create(db *bbolt.DB, address string) (Blockchain, error) {
 	var (
 		tip []byte
 		pow = proofofwork.New()
@@ -20,7 +21,8 @@ func Create(db *bbolt.DB) (Blockchain, error) {
 			return err
 		}
 
-		genesis := block.NewGenesis()
+		coinbase := transaction.NewCoinbaseTx(address, "")
+		genesis := block.NewGenesis(coinbase)
 		block, err := pow.Sign(genesis)
 		if err != nil {
 			return fmt.Errorf("proof-of-work: %w", err)

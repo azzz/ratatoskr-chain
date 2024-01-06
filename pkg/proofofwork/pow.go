@@ -76,7 +76,7 @@ func (p ProofOfWork) Sign(b block.Block) (block.Block, error) {
 func (p ProofOfWork) prepareHeaders(b block.Block, nonce uint64) [][]byte {
 	return [][]byte{
 		b.PrevBlockHash,
-		b.Data,
+		b.TransactionsHash(),
 		uintToBytes(b.Timestamp),
 		p.target.Bytes(),
 		uintToBytes(nonce),
