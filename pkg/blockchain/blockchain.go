@@ -2,81 +2,44 @@ package blockchain
 
 import (
 	"errors"
-	"fmt"
 	"github.com/azzz/ratatoskr/pkg/transaction"
 
 	"github.com/azzz/ratatoskr/pkg/block"
-	"go.etcd.io/bbolt"
 )
 
-type ProofOfWork interface {
-	Sign(block block.Block) (block.Block, error)
-}
-
 type Blockchain struct {
-	tip []byte
-	pow ProofOfWork
-	db  *bbolt.DB
+	pow   ProofOfWork
+	store Store
 }
 
 func (bc Blockchain) Iterator() Iterator {
-	return Iterator{db: bc.db, head: bc.tip}
+	return Iterator{store: bc.store, head: bc.store.Tip()}
 }
 
 func (bc Blockchain) Tip() []byte {
-	return bc.tip
+	return bc.store.Tip()
 }
 
 func (bc *Blockchain) AddBlock(transactions []transaction.Transaction) error {
-	tx, err := bc.db.Begin(true)
-	if err != nil {
-		return fmt.Errorf("begin tx: %w", err)
-	}
-	defer tx.Rollback()
+	return bc.store.AddBlock(func(tip []byte) (block.Block, error) {
+		newBlock := block.New(transactions, tip)
+		return bc.pow.Sign(newBlock)
+	})
+}
 
-	b := tx.Bucket(blocksBucket)
-	if b == nil {
-		return errors.New("bucket is missing")
-	}
+func (bc *Blockchain) addGenesis(address string) error {
+	return bc.store.AddBlock(func(tip []byte) (block.Block, error) {
+		if tip != nil {
+			return block.Block{}, errors.New("genesis can be added only to an empty blockchain")
+		}
 
-	tip := b.Get(tipKey)
-	if tip == nil {
-		return errors.New("missing tip")
-	}
+		coinbase := transaction.NewCoinbaseTx(address, "")
+		genesis := block.NewGenesis(coinbase)
 
-	block := block.New(transactions, tip)
-	signed, err := bc.pow.Sign(block)
-	if err != nil {
-		return fmt.Errorf("proof-of-work: %w", err)
-	}
-
-	encoded, err := signed.Serialize()
-	if err != nil {
-		return fmt.Errorf("serialize: %w", err)
-	}
-
-	if err := b.Put(signed.Hash, encoded); err != nil {
-		return fmt.Errorf("save block: %w", err)
-	}
-
-	if err := b.Put(tipKey, signed.Hash); err != nil {
-		return fmt.Errorf("save tip: %w", err)
-	}
-
-	bc.tip = signed.Hash
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("commit tx: %w", err)
-	}
-
-	return nil
+		return bc.pow.Sign(genesis)
+	})
 }
 
 func (bc Blockchain) FindUnspendTransactions(address string) []transaction.Transaction {
 	return nil
 }
-
-var (
-	blocksBucket = []byte("blocks")
-	tipKey       = []byte("l")
-)

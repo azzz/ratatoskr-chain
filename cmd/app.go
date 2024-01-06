@@ -12,7 +12,7 @@ func CreateBlockchain(address string) blockchain.Blockchain {
 	db, err := bbolt.Open(path.Join(config.DataDir, "database.db"), 0600, nil)
 	cobra.CheckErr(err)
 
-	bc, err := blockchain.Create(db, address)
+	bc, err := blockchain.CreatePersistent(db, address)
 	cobra.CheckErr(err)
 
 	return bc
@@ -22,7 +22,7 @@ func LoadBlockchain() blockchain.Blockchain {
 	db, err := bbolt.Open(path.Join(config.DataDir, "database.db"), 0600, nil)
 	cobra.CheckErr(err)
 
-	bc, err := blockchain.Load(db)
+	bc, err := blockchain.LoadPersistent(db)
 	cobra.CheckErr(err)
 
 	return bc
