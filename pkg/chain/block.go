@@ -17,13 +17,9 @@ type Block struct {
 	Nonce         uint64
 }
 
-func NewGenesisBlock() Block {
-	return newBlock("genesis block", []byte{})
-}
-
 // newBlock creates a new block without hash and nonce
 func newBlock(data string, prevBlockHash []byte) Block {
-	ts := time.Now().UnixNano()
+	ts := time.Now().UnixMicro()
 	return Block{
 		Timestamp:     uint64(ts),
 		Data:          []byte(data),

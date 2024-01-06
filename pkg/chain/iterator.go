@@ -5,20 +5,30 @@ import (
 )
 
 type Iterator struct {
-	current []byte
-	db      *bbolt.DB
+	head  []byte
+	block Block
+	err   error
+	db    *bbolt.DB
 }
 
-func (i *Iterator) Next() *Block {
+func (i *Iterator) Err() error {
+	return i.err
+}
+
+func (i *Iterator) Block() Block {
+	return i.block
+}
+
+func (i *Iterator) Next() bool {
 	var block Block
 
-	if i.current == nil {
-		return nil
+	if i.head == nil {
+		return false
 	}
 
 	err := i.db.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket(blocksKey)
-		encoded := b.Get(i.current)
+		encoded := b.Get(i.head)
 
 		var err error
 		block, err = DeserializeBlock(encoded)
@@ -26,10 +36,12 @@ func (i *Iterator) Next() *Block {
 	})
 
 	if err != nil {
-		return nil
+		i.err = err
+		return false
 	}
 
-	i.current = block.Hash
+	i.block = block
+	i.head = block.PrevBlockHash
 
-	return &block
+	return true
 }

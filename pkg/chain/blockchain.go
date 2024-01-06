@@ -24,63 +24,52 @@ var (
 
 func (bc Blockchain) Iterator() Iterator {
 	return Iterator{
-		current: bc.tip,
-		db:      bc.db,
+		head: bc.tip,
+		db:   bc.db,
 	}
 }
 
-func NewBlockChainFromState(ctx context.Context, db *bbolt.DB) (Blockchain, error) {
-	pow := NewSimpleHashCash(24)
-	bc := Blockchain{
-		db: db, pow: pow,
-	}
+func (bc Blockchain) IsEmpty() bool {
+	return bc.tip == nil
+}
+
+func NewBlockchain(db *bbolt.DB, pow ProofOfWork) (Blockchain, error) {
+	var tip []byte
 
 	err := db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket(blocksKey)
-
 		if b == nil {
-			genesis := NewGenesisBlock()
-			if err := pow.Run(ctx, &genesis); err != nil {
-				return fmt.Errorf("hash genesis block: %w", err)
-			}
-
 			b, err := tx.CreateBucket(blocksKey)
 			if err != nil {
 				return fmt.Errorf("create bucket: %w", err)
 			}
 
-			data, err := genesis.Serialize()
-			if err != nil {
-				return fmt.Errorf("serialize genesis: %w", err)
-			}
-
-			if err := b.Put(genesis.Hash, data); err != nil {
-				return fmt.Errorf("save block: %w", err)
-			}
-
-			if err := b.Put([]byte("l"), genesis.Hash); err != nil {
-				return fmt.Errorf("save last hash: %w", err)
-			}
-
-			bc.tip = genesis.Hash
+			b.Put([]byte("l"), nil)
 		} else {
-			l := b.Get([]byte("l"))
-			if l == nil {
-				return errors.New("missing last hash key, the DB is probably broken")
-			}
-
-			bc.tip = l
+			tip = b.Get([]byte("l"))
 		}
 
 		return nil
 	})
 
-	return bc, err
+	return Blockchain{
+		tip: tip,
+		db:  db,
+		pow: pow,
+	}, err
 }
 
-// AddBlock adds a new block into the chain.
-// Pay attention it's a heavy operation as it runs Proof-of-Work for the block.
-func (bc Blockchain) AddBlock(ctx context.Context, data string) error {
+func (bc *Blockchain) AddGenesisBlock(ctx context.Context) error {
+	if !bc.IsEmpty() {
+		return errors.New("blockchain is not empty")
+	}
+
+	block, err := bc.addBlock(ctx, "genesis block")
+	bc.tip = block.Hash
+	return err
+}
+
+func (bc Blockchain) addBlock(ctx context.Context, data string) (Block, error) {
 	var lastHash []byte
 
 	err := bc.db.View(func(tx *bbolt.Tx) error {
@@ -90,16 +79,16 @@ func (bc Blockchain) AddBlock(ctx context.Context, data string) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("retrieve last hash: %w", err)
+		return Block{}, fmt.Errorf("retrieve last hash: %w", err)
 	}
 
 	if lastHash == nil {
-		return errors.New("missing last block hash, the db is probably broken")
+		return Block{}, errors.New("missing last block hash, the db is probably broken")
 	}
 
 	newBlock := newBlock(data, lastHash)
 	if err := bc.pow.Run(ctx, &newBlock); err != nil {
-		return fmt.Errorf("hash block: %w", err)
+		return Block{}, fmt.Errorf("hash block: %w", err)
 	}
 
 	err = bc.db.Update(func(tx *bbolt.Tx) error {
@@ -121,5 +110,21 @@ func (bc Blockchain) AddBlock(ctx context.Context, data string) error {
 		return nil
 	})
 
-	return nil
+	return newBlock, nil
+}
+
+// AddBlock adds a new block into the chain.
+// Pay attention it's a heavy operation as it runs Proof-of-Work for the block.
+func (bc *Blockchain) AddBlock(ctx context.Context, data string) error {
+	if bc.IsEmpty() {
+		return errors.New("blockchain is not initialized yet")
+	}
+
+	block, err := bc.addBlock(ctx, data)
+	bc.tip = block.Hash
+	return err
+}
+
+func (bc Blockchain) Tip() []byte {
+	return bc.tip
 }
