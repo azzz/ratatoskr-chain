@@ -11,7 +11,7 @@ type InMemoryStore struct {
 	tip    []byte
 }
 
-func NewInMemoryBlockChain() Blockchain {
+func NewInMemoryBlockChain(address string) Blockchain {
 	store := &InMemoryStore{
 		blocks: make(map[string]block.Block),
 		tip:    nil,
@@ -20,6 +20,10 @@ func NewInMemoryBlockChain() Blockchain {
 	bc := Blockchain{
 		pow:   proofofwork.New(),
 		store: store,
+	}
+
+	if err := bc.addGenesis(address); err != nil {
+		panic(err)
 	}
 
 	return bc

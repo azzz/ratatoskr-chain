@@ -1,7 +1,9 @@
 package transaction
 
 import (
+	"errors"
 	"fmt"
+	"github.com/google/uuid"
 )
 
 const (
@@ -16,11 +18,11 @@ type Transaction struct {
 	Vout []TxOutput
 }
 
-func (tx Transaction) IsCoinBase() bool {
-	return len(tx.Vin) == 1 && tx.Vin[0].Vout == -1
+func (tx Transaction) IsCoinbase() bool {
+	return len(tx.Vin) == 1 && tx.Vin[0].Vout == -1 && len(tx.Vin) == 1 && tx.Vin[0].TxID == nil
 }
 
-func NewCoinbaseTx(to, data string) Transaction {
+func NewCoinbaseTx(to, data string) (Transaction, error) {
 	if data == "" {
 		data = fmt.Sprintf("Reward to '%s'", to)
 	}
@@ -28,7 +30,50 @@ func NewCoinbaseTx(to, data string) Transaction {
 	txin := TxInput{TxID: []byte{}, Vout: -1, ScriptSig: data}
 	txout := TxOutput{Value: subsidy, ScriptPubKey: to}
 
-	tx := Transaction{ID: nil, Vin: []TxInput{txin}, Vout: []TxOutput{txout}}
+	return newTransaction([]TxInput{txin}, []TxOutput{txout})
+}
 
-	return tx
+// Output is an extended TxOutput used in some business logic
+type Output struct {
+	TxOutput
+	TxID []byte
+	Vout int
+}
+
+func NewUTXOTransaction(sender, receiver string, amount uint64, availableOutputs []Output) (Transaction, error) {
+	var (
+		balance uint64
+		inputs  []TxInput
+		outputs []TxOutput
+	)
+
+	for _, out := range availableOutputs {
+		balance += out.Value
+		inputs = append(inputs, TxInput{out.TxID, out.Vout, sender})
+	}
+
+	outputs = append(outputs, TxOutput{
+		Value:        amount,
+		ScriptPubKey: receiver,
+	})
+
+	if balance < amount {
+		return Transaction{}, errors.New("insufficient funds")
+	}
+
+	if amount < balance {
+		// return change to the sender
+		outputs = append(outputs, TxOutput{balance - amount, sender})
+	}
+
+	return newTransaction(inputs, outputs)
+}
+
+func newTransaction(Vin []TxInput, Vout []TxOutput) (Transaction, error) {
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return Transaction{}, fmt.Errorf("generate id: %w", err)
+	}
+
+	return Transaction{id[:], Vin, Vout}, nil
 }
