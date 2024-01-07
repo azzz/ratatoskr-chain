@@ -40,9 +40,9 @@ type Output struct {
 	Vout int
 }
 
-func NewUTXOTransaction(sender, receiver string, amount uint64, availableOutputs []Output) (Transaction, error) {
+func NewUTXOTransaction(sender, receiver string, amount uint, availableOutputs []Output) (Transaction, error) {
 	var (
-		balance uint64
+		balance uint
 		inputs  []TxInput
 		outputs []TxOutput
 	)

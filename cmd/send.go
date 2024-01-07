@@ -21,7 +21,7 @@ var sendCmd = &cobra.Command{
 		receiver, err := cmd.Flags().GetString("to")
 		cobra.CheckErr(err)
 
-		amount, err := cmd.Flags().GetUint64("amount")
+		amount, err := cmd.Flags().Getuint("amount")
 		cobra.CheckErr(err)
 
 		bc := LoadBlockchain()
@@ -43,7 +43,7 @@ func init() {
 
 	sendCmd.Flags().String("from", "", "Sender address")
 	sendCmd.Flags().String("to", "", "Receiver address")
-	sendCmd.Flags().Uint64("amount", 0, "Amount")
+	sendCmd.Flags().uint("amount", 0, "Amount")
 
 	sendCmd.MarkFlagRequired("from")
 	sendCmd.MarkFlagRequired("to")

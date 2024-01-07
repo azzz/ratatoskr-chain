@@ -1,19 +1,17 @@
 package blockchain
 
 import (
-	"fmt"
 	"github.com/azzz/ratatoskr/pkg/transaction"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func mustSend(bc Blockchain, from, to string, amount uint64) {
+func mustSend(bc Blockchain, from, to string, amount uint) {
 	outputs, err := bc.FindSpendableOutputs(from, amount)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("%s->%s: %d: %v\n", from, to, amount, outputs)
 	tx, err := transaction.NewUTXOTransaction(from, to, amount, outputs)
 	if err != nil {
 		panic(err)
@@ -25,7 +23,7 @@ func mustSend(bc Blockchain, from, to string, amount uint64) {
 	}
 }
 
-func mustBalance(bc Blockchain, address string) uint64 {
+func mustBalance(bc Blockchain, address string) uint {
 	acc, err := bc.GetBalance(address)
 	if err != nil {
 		panic(err)
@@ -45,8 +43,8 @@ func TestBlockchain_FindUnspentTransactions(t *testing.T) {
 	t.Run("Batman sends to Robin", func(t *testing.T) {
 		bc := NewInMemoryBlockChain(batman)
 		mustSend(bc, batman, robin, 3)
-		assert.Equal(t, uint64(2), mustBalance(bc, batman))
-		assert.Equal(t, uint64(3), mustBalance(bc, robin))
+		assert.Equal(t, uint(2), mustBalance(bc, batman))
+		assert.Equal(t, uint(3), mustBalance(bc, robin))
 	})
 
 	t.Run("Batman and Robin send to Superman", func(t *testing.T) {
@@ -55,12 +53,12 @@ func TestBlockchain_FindUnspentTransactions(t *testing.T) {
 		mustSend(bc, batman, superman, 2)
 		mustSend(bc, robin, superman, 1)
 
-		assert.Equal(t, uint64(1), mustBalance(bc, batman))
-		assert.Equal(t, uint64(1), mustBalance(bc, robin))
-		assert.Equal(t, uint64(3), mustBalance(bc, superman))
+		assert.Equal(t, uint(1), mustBalance(bc, batman))
+		assert.Equal(t, uint(1), mustBalance(bc, robin))
+		assert.Equal(t, uint(3), mustBalance(bc, superman))
 
 		mustSend(bc, superman, flash, 3)
-		assert.Equal(t, uint64(0), mustBalance(bc, superman))
-		assert.Equal(t, uint64(3), mustBalance(bc, flash))
+		assert.Equal(t, uint(0), mustBalance(bc, superman))
+		assert.Equal(t, uint(3), mustBalance(bc, flash))
 	})
 }

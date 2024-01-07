@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	maxNonce   = math.MaxUint64
+	maxNonce   = math.MaxUint
 	targetBits = 16
 )
 
@@ -31,7 +31,7 @@ func New() ProofOfWork {
 }
 
 type ProofOfWorkResult struct {
-	Nonce uint64
+	Nonce uint
 	Hash  []byte
 }
 
@@ -48,7 +48,7 @@ func (p ProofOfWork) Validate(b block.Block) bool {
 
 func (p ProofOfWork) Sign(b block.Block) (block.Block, error) {
 	var (
-		nonce   uint64 = 0
+		nonce   uint = 0
 		hashInt big.Int
 		headers = p.prepareHeaders(b, 0)
 	)
@@ -73,7 +73,7 @@ func (p ProofOfWork) Sign(b block.Block) (block.Block, error) {
 	return block.Block{}, errors.New("reached the maximal nonce without a result")
 }
 
-func (p ProofOfWork) prepareHeaders(b block.Block, nonce uint64) [][]byte {
+func (p ProofOfWork) prepareHeaders(b block.Block, nonce uint) [][]byte {
 	return [][]byte{
 		b.PrevBlockHash,
 		b.TransactionsHash(),
@@ -83,8 +83,8 @@ func (p ProofOfWork) prepareHeaders(b block.Block, nonce uint64) [][]byte {
 	}
 }
 
-func uintToBytes(u uint64) []byte {
+func uintToBytes(u uint) []byte {
 	data := make([]byte, 8)
-	binary.BigEndian.PutUint64(data, u)
+	binary.BigEndian.PutUint64(data, uint64(u))
 	return data
 }

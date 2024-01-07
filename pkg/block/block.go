@@ -12,17 +12,17 @@ import (
 )
 
 type Block struct {
-	Timestamp     uint64
+	Timestamp     uint
 	Transactions  []tx.Transaction
 	PrevBlockHash []byte
-	Nonce         uint64
+	Nonce         uint
 	Hash          []byte
 }
 
 func New(transactions []tx.Transaction, prevBlockHash []byte) Block {
 	ts := time.Now().UnixMicro()
 	return Block{
-		Timestamp:     uint64(ts),
+		Timestamp:     uint(ts),
 		Transactions:  transactions,
 		PrevBlockHash: prevBlockHash,
 	}
@@ -31,7 +31,7 @@ func New(transactions []tx.Transaction, prevBlockHash []byte) Block {
 func NewGenesis(coinbase tx.Transaction) Block {
 	ts := time.Now().UnixMicro()
 	return Block{
-		Timestamp:     uint64(ts),
+		Timestamp:     uint(ts),
 		Transactions:  []tx.Transaction{coinbase},
 		PrevBlockHash: []byte{},
 	}

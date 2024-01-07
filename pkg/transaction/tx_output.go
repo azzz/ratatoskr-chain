@@ -1,7 +1,7 @@
 package transaction
 
 type TxOutput struct {
-	Value        uint64
+	Value        uint
 	ScriptPubKey string
 }
 

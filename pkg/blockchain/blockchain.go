@@ -43,13 +43,13 @@ func (bc Blockchain) addGenesis(address string) error {
 	})
 }
 
-func (bc Blockchain) GetBalance(address string) (uint64, error) {
+func (bc Blockchain) GetBalance(address string) (uint, error) {
 	outs, err := bc.FindUTXO(address)
 	if err != nil {
 		return 0, fmt.Errorf("find unspent outputs: %w", err)
 	}
 
-	var sum uint64
+	var sum uint
 	for _, out := range outs {
 		sum += out.Value
 	}
@@ -125,9 +125,9 @@ func (bc Blockchain) FindUnspentTransactions(address string) ([]transaction.Tran
 // FindSpendableOutputs returns a minimal list of outputs needed to accumulate the required amount.
 // First returning value: the accumulated amount
 // Second returning value: map of transaction ID to output
-func (bc Blockchain) FindSpendableOutputs(address string, amount uint64) ([]transaction.Output, error) {
+func (bc Blockchain) FindSpendableOutputs(address string, amount uint) ([]transaction.Output, error) {
 	var (
-		acc     uint64
+		acc     uint
 		outputs = []transaction.Output{}
 	)
 
